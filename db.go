@@ -20,7 +20,10 @@ type Range struct {
 type DB struct {
 	c    *C.rocksdb_t
 	name string
-	opts *Options
+}
+
+func NewDBFromNative(db_native *C.rocksdb_t, name_optional string) *DB {
+	return &DB{c: db_native, name: name_optional}
 }
 
 // OpenDb opens a database with the specified options.
@@ -38,7 +41,6 @@ func OpenDb(opts *Options, name string) (*DB, error) {
 	return &DB{
 		name: name,
 		c:    db,
-		opts: opts,
 	}, nil
 }
 
@@ -57,7 +59,6 @@ func OpenDbWithTTL(opts *Options, name string, ttl int) (*DB, error) {
 	return &DB{
 		name: name,
 		c:    db,
-		opts: opts,
 	}, nil
 }
 
@@ -76,7 +77,6 @@ func OpenDbForReadOnly(opts *Options, name string, errorIfLogFileExist bool) (*D
 	return &DB{
 		name: name,
 		c:    db,
-		opts: opts,
 	}, nil
 }
 
@@ -135,7 +135,6 @@ func OpenDbColumnFamilies(
 	return &DB{
 		name: name,
 		c:    db,
-		opts: opts,
 	}, cfHandles, nil
 }
 
@@ -197,7 +196,6 @@ func OpenDbForReadOnlyColumnFamilies(
 	return &DB{
 		name: name,
 		c:    db,
-		opts: opts,
 	}, cfHandles, nil
 }
 
@@ -284,6 +282,20 @@ func (db *DB) GetCF(opts *ReadOptions, cf *ColumnFamilyHandle, key []byte) (*Sli
 		return nil, errors.New(C.GoString(cErr))
 	}
 	return NewSlice(cValue, cValLen), nil
+}
+
+// GetCF returns the data associated with the key from the database and column family.
+func (db *DB) GetCFPinned(opts *ReadOptions, cf *ColumnFamilyHandle, key []byte) (*PinnableSliceHandle, error) {
+	var (
+		cErr *C.char
+		cKey = byteToChar(key)
+	)
+	cRet := C.rocksdb_get_pinned_cf(db.c, opts.c, cf.c, cKey, C.size_t(len(key)), &cErr)
+	if cErr != nil {
+		defer C.rocksdb_free(unsafe.Pointer(cErr))
+		return nil, errors.New(C.GoString(cErr))
+	}
+	return NewNativePinnableSliceHandle(cRet), nil
 }
 
 // GetPinned returns the data associated with the key from the database.
