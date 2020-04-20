@@ -5,6 +5,7 @@ import "C"
 import (
 	"errors"
 	"io"
+	"unsafe"
 )
 
 // WriteBatch is a batching of Puts, Merges and Deletes.
@@ -20,6 +21,10 @@ func NewWriteBatch() *WriteBatch {
 // NewNativeWriteBatch create a WriteBatch object.
 func NewNativeWriteBatch(c *C.rocksdb_writebatch_t) *WriteBatch {
 	return &WriteBatch{c}
+}
+
+func NewNativeWriteBatch1(c unsafe.Pointer) *WriteBatch {
+	return NewNativeWriteBatch((*C.rocksdb_writebatch_t)(c))
 }
 
 // WriteBatchFrom creates a write batch from a serialized WriteBatch.
