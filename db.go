@@ -22,8 +22,8 @@ type DB struct {
 	name string
 }
 
-func NewDBFromNative(db_native *C.rocksdb_t, name_optional string) *DB {
-	return &DB{c: db_native, name: name_optional}
+func NewDBFromNative(db_native unsafe.Pointer) *DB {
+	return &DB{c: (*C.rocksdb_t)(db_native)}
 }
 
 // OpenDb opens a database with the specified options.

@@ -15,6 +15,10 @@ func NewNativeColumnFamilyHandle(c *C.rocksdb_column_family_handle_t) *ColumnFam
 	return &ColumnFamilyHandle{c}
 }
 
+func NewNativeColumnFamilyHandle1(c unsafe.Pointer) *ColumnFamilyHandle {
+	return NewNativeColumnFamilyHandle((*C.rocksdb_column_family_handle_t)(c))
+}
+
 // UnsafeGetCFHandler returns the underlying c column family handle.
 func (h *ColumnFamilyHandle) UnsafeGetCFHandler() unsafe.Pointer {
 	return unsafe.Pointer(h.c)
